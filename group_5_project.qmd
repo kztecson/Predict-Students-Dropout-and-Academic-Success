@@ -44,4 +44,4 @@ While the dataset contains 36 variables, we have selected the following key pote
 -   **Marital status:** The marital status of the student.
 -   **Application mode:** The method of application used by the student.
 
-### Exploratory Analysis
+### Exploratory Analysi
