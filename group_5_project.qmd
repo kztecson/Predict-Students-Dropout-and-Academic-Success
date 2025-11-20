@@ -32,7 +32,7 @@ For our project, we are utilizing the "Predict Students' Dropout and Academic Su
 
 While the dataset contains 36 variables, we have selected the following key potential predictors for our analysis, focusing on academic performance, socioeconomic status, and demographics:
 
--   **Curricular units (1st & 2nd Sem):** Specifically the grades and number of units approved, which serve as direct indicators of current academic performance.
+-   **Curricular units (1st & 2nd Sem):** Specifically, the grades and number of units approved, which serve as direct indicators of current academic performance.
 -   **Tuition fees up to date:** Indicates if the student's tuition payments are current.
 -   **Admission grade:** The grade used for admission.
 -   **Previous qualification (grade):** The grade obtained in the student's qualification prior to enrollment.
@@ -44,4 +44,4 @@ While the dataset contains 36 variables, we have selected the following key pote
 -   **Marital status:** The marital status of the student.
 -   **Application mode:** The method of application used by the student.
 
-test
+### Exploratory Analysis
