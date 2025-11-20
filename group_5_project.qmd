@@ -1,0 +1,45 @@
+---
+title: "Predict Students’ Dropout and Academic Success"
+subtitle: "Group 5 Project"
+author: "Ida Siewe, Haris Malik, Azamat Tukpatov, Kenth Tecson"
+date: "2025-11-19"
+format:
+  pdf:
+    toc: true
+    code-fold: true
+    theme: cosmo
+engine: visual
+---
+
+# Introduction
+
+## Description of Data
+
+Student retention is a significant challenge in higher education, making the identification of students at risk of dropping out crucial for institutions.
+
+For our project, we are utilizing the "Predict Students' Dropout and Academic Success" dataset sourced from the UCI Machine Learning Repository. This dataset was developed by the Instituto Politécnico de Portalegre and contains **4,424 observations** with **36 variables**.
+
+**Primary Research Question:** What factors most strongly influence a student's likelihood of dropping out or succeeding?
+
+## Description of Variables
+
+### Response Variable
+
+-   **Target:** The student's academic status at the end of the normal duration of the course.
+    -   This is a categorical variable with three classes: **Dropout**, **Enrolled**, and **Graduate**.
+
+### Predictors
+
+While the dataset contains 36 variables, we have selected the following key potential predictors for our analysis, focusing on academic performance, socioeconomic status, and demographics:
+
+-   **Curricular units (1st & 2nd Sem):** Specifically the grades and number of units approved, which serve as direct indicators of current academic performance.
+-   **Tuition fees up to date:** Indicates if the student's tuition payments are current.
+-   **Admission grade:** The grade used for admission.
+-   **Previous qualification (grade):** The grade obtained in the student's qualification prior to enrollment.
+-   **Age at enrollment:** The age of the student at the time of enrollment.
+-   **Scholarship holder:** Indicates whether the student receives financial aid.
+-   **Course:** The specific degree program the student is enrolled in.
+-   **Parents' Qualification:** The highest education level of the student's mother and father.
+-   **Nationality:** The nationality of the student.
+-   **Marital status:** The marital status of the student.
+-   **Application mode:** The method of application used by the student.
