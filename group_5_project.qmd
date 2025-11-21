@@ -51,7 +51,7 @@ For our project, we are utilizing the "Predict Students' Dropout and Academic Su
 
 ### Predictors
 
-While the dataset contains 36 variables, we have selected the following key potential predictors for our analysis, focusing on academic performance, socioeconomic status, and demographics:
+While the dataset contains 37 variables, we have selected the following key potential predictors for our analysis, focusing on academic performance, socioeconomic status, and demographics:
 
 -   **Curricular units (1st & 2nd Sem):** Specifically, the grades and number of units approved, which serve as direct indicators of current academic performance.
 -   **Tuition fees up to date:** Indicates if the student's tuition payments are current.
@@ -66,3 +66,59 @@ While the dataset contains 36 variables, we have selected the following key pote
 -   **Application mode:** The method of application used by the student.
 
 ### Exploratory Analytics
+
+The dataset includes 4,424 students and 37 total variables, based on dim(data) = 4424 × 37. The outcome variable, Target, separates students into three groups: Dropout (1,421 students, 32.1%), Enrolled (794 students, 17.9%), and Graduate (2,209 students, 49.9%). Since the Graduate group is much larger than the others, the data is noticeably unbalanced. This imbalance is something we need to keep in mind later when we build our models, because it can affect accuracy unless we use things like stratified sampling or class-balancing techniques.
+
+```{r}
+dim(data)
+table(data$Target)
+round(prop.table(table(data$Target)), 3)
+```
+
+```{r}
+library(ggplot2)
+ggplot(data, aes(x = Status)) +
+  geom_bar(aes(y = (..count..)/sum(..count..)), fill="steelblue") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  geom_text(stat="count", aes(label = scales::percent(..count../sum(..count..), accuracy = 1),
+                              y = (..count..)/sum(..count..)), vjust = -0.5) +
+  theme_minimal() +
+  labs(title="Student Status proportions", y="Proportion", x="")
+```
+
+We standardized the response into Status = factor(Target) and coerced likely categorical predictors (e.g., marital status, course, scholarship, debtor) to factor type. Numeric summaries for key variables are as follows: Admission.grade (Min = 95.0, Q1 ≈ 117.9, Median = 126.1, Mean = 127.0, Q3 ≈ 134.8, Max = 190.0); Previous.qualification..grade. (Min = 95.0, Median ≈ 133.1, Mean ≈ 132.6); Age.at.enrollment (Min = 17, Q1 = 19, Median = 20, Mean ≈ 23.27, Max = 70); Curricular.units.1st.sem..grade. and Curricular.units.2nd.sem..grade. (medians ≈ 12.29 and 12.20, means ≈ 10.64 and 10.23 respectively). The small differences between means and medians for admission and previous grades indicate roughly symmetric distributions, whereas the lower means relative to medians for semester grades point to left-skewed distributions with a tail toward lower scores. The age distribution exhibits a right tail driven by older students (outliers). For modeling, we recommend treating extreme ages explicitly, considering robustness to outliers for grade variables, and possibly binning or transforming grades if needed.
+
+```{r}
+
+# standardize response
+data$Status <- factor(data$Target, levels = c("Dropout","Enrolled","Graduate"))
+cat_cols <- c("Marital.status","Application.mode","Course","Nationality",
+              "Daytime.Evening.attendance","Scholarship.holder","Debtor",
+              "Mother.s.qualification","Father.s.qualification","Tuition.fees.up.to.date")
+for (c in intersect(cat_cols, names(data))) data[[c]] <- factor(data[[c]])
+
+# numeric summaries
+num_vars <- intersect(c("Admission.grade","Previous.qualification..grade.",
+                        "Age.at.enrollment","Curricular.units.1st.sem..grade.",
+                        "Curricular.units.2nd.sem..grade."), names(data))
+if (length(num_vars)>0) print(summary(data[, num_vars]))
+
+
+
+
+```
+
+After creating two combined performance measures—one counting how many curricular units each student successfully completed in their first year, and another summarizing their average grades across available academic records—I compared these values across the three status groups. A clear pattern showed up right away. Students who eventually graduated had the strongest first-year results, completing a little over twelve units on average and holding the highest median grades. Enrolled students fell into a middle zone with moderate course completion and grades. Meanwhile, the dropout group had noticeably lower numbers, passing fewer than five units during their first year and showing much lower median grades. This gap suggests that early academic performance is one of the clearest indicators of whether a student is likely to struggle, persist, or eventually graduate.
+
+```{r}
+data <- data %>%
+  mutate(
+    CU1_approved = ifelse(!is.na(Curricular.units.1st.sem..approved.), Curricular.units.1st.sem..approved., 0),
+    CU2_approved = ifelse(!is.na(Curricular.units.2nd.sem..approved.), Curricular.units.2nd.sem..approved., 0),
+    first_year_approved = CU1_approved + CU2_approved,
+    avg_year_grade = rowMeans(select(., any_of(c("Curricular.units.1st.sem..grade.","Curricular.units.2nd.sem..grade.","Admission.grade","Previous.qualification..grade."))), na.rm = TRUE)
+  )
+# quick check
+data %>% group_by(Status) %>% summarise(mean_first_year_approved = mean(first_year_approved, na.rm=TRUE),
+                                        median_avg_grade = median(avg_year_grade, na.rm=TRUE))
+```
