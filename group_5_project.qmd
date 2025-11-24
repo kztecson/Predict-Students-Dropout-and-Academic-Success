@@ -75,18 +75,6 @@ table(data$Target)
 round(prop.table(table(data$Target)), 3)
 ```
 
-```{r}
-library(ggplot2)
-ggplot(data, aes(x = Status)) +
-  geom_bar(aes(y = (..count..)/sum(..count..)), fill="steelblue") +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  geom_text(stat="count", aes(label = scales::percent(..count../sum(..count..), accuracy = 1),
-                              y = (..count..)/sum(..count..)), vjust = -0.5) +
-  theme_minimal() +
-  labs(title="Student Status proportions", y="Proportion", x="")
-```
-
-We standardized the response into Status = factor(Target) and coerced likely categorical predictors (e.g., marital status, course, scholarship, debtor) to factor type. Numeric summaries for key variables are as follows: Admission.grade (Min = 95.0, Q1 ≈ 117.9, Median = 126.1, Mean = 127.0, Q3 ≈ 134.8, Max = 190.0); Previous.qualification..grade. (Min = 95.0, Median ≈ 133.1, Mean ≈ 132.6); Age.at.enrollment (Min = 17, Q1 = 19, Median = 20, Mean ≈ 23.27, Max = 70); Curricular.units.1st.sem..grade. and Curricular.units.2nd.sem..grade. (medians ≈ 12.29 and 12.20, means ≈ 10.64 and 10.23 respectively). The small differences between means and medians for admission and previous grades indicate roughly symmetric distributions, whereas the lower means relative to medians for semester grades point to left-skewed distributions with a tail toward lower scores. The age distribution exhibits a right tail driven by older students (outliers). For modeling, we recommend treating extreme ages explicitly, considering robustness to outliers for grade variables, and possibly binning or transforming grades if needed.
 
 ```{r}
 
@@ -108,6 +96,19 @@ if (length(num_vars)>0) print(summary(data[, num_vars]))
 
 ```
 
+We standardized the response into Status = factor(Target) and coerced likely categorical predictors (e.g., marital status, course, scholarship, debtor) to factor type. Numeric summaries for key variables are as follows: Admission.grade (Min = 95.0, Q1 ≈ 117.9, Median = 126.1, Mean = 127.0, Q3 ≈ 134.8, Max = 190.0); Previous.qualification..grade. (Min = 95.0, Median ≈ 133.1, Mean ≈ 132.6); Age.at.enrollment (Min = 17, Q1 = 19, Median = 20, Mean ≈ 23.27, Max = 70); Curricular.units.1st.sem..grade. and Curricular.units.2nd.sem..grade. (medians ≈ 12.29 and 12.20, means ≈ 10.64 and 10.23 respectively). The small differences between means and medians for admission and previous grades indicate roughly symmetric distributions, whereas the lower means relative to medians for semester grades point to left-skewed distributions with a tail toward lower scores. The age distribution exhibits a right tail driven by older students (outliers). For modeling, we recommend treating extreme ages explicitly, considering robustness to outliers for grade variables, and possibly binning or transforming grades if needed.
+
+```{r}
+library(ggplot2)
+ggplot(data, aes(x = Status)) +
+  geom_bar(aes(y = (..count..)/sum(..count..)), fill="steelblue") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  geom_text(stat="count", aes(label = scales::percent(..count../sum(..count..), accuracy = 1),
+                              y = (..count..)/sum(..count..)), vjust = -0.5) +
+  theme_minimal() +
+  labs(title="Student Status proportions", y="Proportion", x="")
+```
+
 After creating two combined performance measures—one counting how many curricular units each student successfully completed in their first year, and another summarizing their average grades across available academic records—I compared these values across the three status groups. A clear pattern showed up right away. Students who eventually graduated had the strongest first-year results, completing a little over twelve units on average and holding the highest median grades. Enrolled students fell into a middle zone with moderate course completion and grades. Meanwhile, the dropout group had noticeably lower numbers, passing fewer than five units during their first year and showing much lower median grades. This gap suggests that early academic performance is one of the clearest indicators of whether a student is likely to struggle, persist, or eventually graduate.
 
 ```{r}
@@ -122,3 +123,93 @@ data <- data %>%
 data %>% group_by(Status) %>% summarise(mean_first_year_approved = mean(first_year_approved, na.rm=TRUE),
                                         median_avg_grade = median(avg_year_grade, na.rm=TRUE))
 ```
+
+# Methods and Results
+
+## 1. Decision Tree Model (Azamat Tukpatov)
+
+We are using a decision tree as our first model because it is simple, interpretable, and works well with a categorical response variable. Decision trees can capture nonlinear relationships between variables. But a single decision tree can have high variance and is not the best in terms of prediction accuracy.  
+
+## (a) Model formula
+Status = Curricular Units (1st & 2nd Sem) + Tuition Fees Up to Date + Admission Grade + Previous Qualification Grade + Age at Enrollment + Scholarship Holder + Course + Parents' Qualification + Nationality + Marital Status + Application Mode + Debtor Status + Daytime/Evening Attendance
+
+## (b) Thought process for fitting and pruning the decision tree
+
+```{r}
+library(tree)
+
+students <- na.omit(
+  data[, c(
+    "Status",
+    "Admission.grade",
+    "Previous.qualification..grade.",
+    "Age.at.enrollment",
+    "Curricular.units.1st.sem..grade.",
+    "Curricular.units.2nd.sem..grade.",
+    "Curricular.units.1st.sem..approved.",
+    "Curricular.units.2nd.sem..approved.",
+    "Tuition.fees.up.to.date",
+    "Scholarship.holder",
+    "Debtor",
+    "Daytime.evening.attendance.",
+    "Marital.status"
+  )]
+)
+
+tree_full <- tree(Status ~ ., data = students)
+
+plot(tree_full)
+text(tree_full, pretty = 0)
+
+set.seed(10)
+cv_tree <- cv.tree(tree_full, FUN = prune.misclass)
+
+plot(cv_tree$size, cv_tree$dev, type = "b",
+     xlab = "Tree size",
+     ylab = "Deviance")
+
+best_size <- cv_tree$size[which.min(cv_tree$dev)]
+tree_pruned <- prune.misclass(tree_full, best = best_size)
+
+plot(tree_pruned)
+text(tree_pruned, pretty = 0)
+```
+
+The full tree had multiple terminal nodes and could potentialy overfit, so we applied pruning. The cross validation showed that the subtree with 7 terminal nodes gave the lowest deviance, so we selected that as our final pruned tree.
+
+### (c) Train/Test Evaluation
+
+```{r}
+
+set.seed(10)
+tree_errors <- rep(0, 10)
+
+for (i in 1:10) {
+  
+  train_index <- sample(1:nrow(students), size = 0.8 * nrow(students))
+  train_set <- students[train_index, ]
+  test_set  <- students[-train_index, ]
+  
+  tree_full <- tree(Status ~ ., data = train_set)
+  
+  cv_out <- cv.tree(tree_full, FUN = prune.misclass)
+  best_size <- cv_out$size[which.min(cv_out$dev)]
+  tree_pruned <- prune.misclass(tree_full, best = best_size)
+  
+  pred <- predict(tree_pruned, newdata = test_set, type = "class")
+  conf_mat <- table(test_set$Status, pred)
+  tree_errors[i] <- 1 - sum(diag(conf_mat)) / sum(conf_mat)
+  
+  print(paste("Iteration", i, "Test Error =", round(tree_errors[i], 4)))
+}
+
+tree_errors
+
+mean(tree_errors)
+
+```
+
+We randomly split the data 10 times into 80% training and 20% testing. For each split, we fit and pruned a decision tree on the training set and computed misclassification rate on the test set. The average test error was 0.271, meaning the model achieves 72.9% test accuracy.  
+
+The decision tree mostly used academic perfomance to make predictions, especially second semester grades and how many courses passed. It also used tuition fees and age in some of the smaller splits. This shows that early academic progress and financial standing are the biggest factors that separate Dropout, Enrolled, and Graduate students.
+
