@@ -143,7 +143,35 @@ tree_errors
 
 mean(tree_errors)
 
+# -------------------------
 # 3. Random Forest (Kenth)
+# -------------------------
+
+rf_data <- data %>% select(-Target)
+
+set.seed(10)
+rf_errors <- numeric(10)
+
+for(i in 1:10){
+  
+  train_idx <- sample(1:nrow(rf_data), size = 0.8 * nrow(rf_data))
+  train_set <- rf_data[train_idx, ]
+  test_set  <- rf_data[-train_idx, ]
+  
+  # Train Random Forest model
+  rf_model <- randomForest(Status ~ ., data = train_set, importance = TRUE)
+  
+  # Predict on test set
+  rf_pred <- predict(rf_model, newdata = test_set)
+  
+  # Record Prediction Error
+  rf_errors[i] <- mean(rf_pred != test_set$Status)
+  
+  print(paste("Iteration", i, "Error:", round(rf_errors[i], 4)))
+}
+
+print(paste("Mean Random Forest Test Error:", mean(rf_errors)))
+varImpPlot(rf_model, main = "Random Forest Variable Importance")
 ...
 
 

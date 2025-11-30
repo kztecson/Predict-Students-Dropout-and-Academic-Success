@@ -75,7 +75,6 @@ table(data$Target)
 round(prop.table(table(data$Target)), 3)
 ```
 
-
 ```{r}
 
 # standardize response
@@ -128,9 +127,10 @@ data %>% group_by(Status) %>% summarise(mean_first_year_approved = mean(first_ye
 
 ## 1. Decision Tree Model (Azamat Tukpatov)
 
-We are using a decision tree as our first model because it is simple, interpretable, and works well with a categorical response variable. Decision trees can capture nonlinear relationships between variables. But a single decision tree can have high variance and is not the best in terms of prediction accuracy.  
+We are using a decision tree as our first model because it is simple, interpretable, and works well with a categorical response variable. Decision trees can capture nonlinear relationships between variables. But a single decision tree can have high variance and is not the best in terms of prediction accuracy.
 
 ## (a) Model formula
+
 Status = Curricular Units (1st & 2nd Sem) + Tuition Fees Up to Date + Admission Grade + Previous Qualification Grade + Age at Enrollment + Scholarship Holder + Course + Parents' Qualification + Nationality + Marital Status + Application Mode + Debtor Status + Daytime/Evening Attendance
 
 ## (b) Thought process for fitting and pruning the decision tree
@@ -175,7 +175,7 @@ plot(tree_pruned)
 text(tree_pruned, pretty = 0)
 ```
 
-The full tree had multiple terminal nodes and could potentialy overfit, so we applied pruning. The cross validation showed that the subtree with 7 terminal nodes gave the lowest deviance, so we selected that as our final pruned tree.
+The full tree had multiple terminal nodes and could potentially overfit, so we applied pruning. The cross validation showed that the subtree with 7 terminal nodes gave the lowest deviance, so we selected that as our final pruned tree.
 
 ### (c) Train/Test Evaluation
 
@@ -209,7 +209,72 @@ mean(tree_errors)
 
 ```
 
-We randomly split the data 10 times into 80% training and 20% testing. For each split, we fit and pruned a decision tree on the training set and computed misclassification rate on the test set. The average test error was 0.271, meaning the model achieves 72.9% test accuracy.  
+We randomly split the data 10 times into 80% training and 20% testing. For each split, we fit and pruned a decision tree on the training set and computed misclassification rate on the test set. The average test error was 0.271, meaning the model achieves 72.9% test accuracy.
 
-The decision tree mostly used academic perfomance to make predictions, especially second semester grades and how many courses passed. It also used tuition fees and age in some of the smaller splits. This shows that early academic progress and financial standing are the biggest factors that separate Dropout, Enrolled, and Graduate students.
+The decision tree mostly used academic performance to make predictions, especially second semester grades and how many courses passed. It also used tuition fees and age in some of the smaller splits. This shows that early academic progress and financial standing are the biggest factors that separate Dropout, Enrolled, and Graduate students.
 
+## 2. Random Forest Model Training and Cross-Validation (Kenth Tecson)
+
+## (a) Model formula
+
+## $$Status \sim . - Target$$
+
+Predict Status using all variables in the dataset. Exclude the original string Target variable to avoid redundancy.
+
+## (b) Thought process
+
+We selected the Random Forest model to complement the Decision Tree. While the single decision tree offers high interpretability, it can suffer from high variance and be prone to overfitting. Random Forest addresses these limitations by creating an ensemble of decorrelated trees, resulting in higher predictive accuracy. Unlike the Decision Tree model where we manually selected a subset of predictors, for the Random Forest we decided to utilize all available predictors in the dataset. This allows the model to identify feature importance and capture non linear interactions between the demographic, socioeconomic, and academic variables without manual filtering. We used the standard configuration for the number of trees ($ntree=500$) to ensure the error rate stabilizes.
+
+## (c) Train/Test Evaluation
+
+We performed a 10 fold cross validation. In each iteration, the dataset was randomly split into 80% training and 20% testing sets using set.seed(10) to ensure reproducibility. The model is trained on the training set and calculates the misclassification error on the test set.
+
+```{r}
+#| label: random-forest-cv
+#| warning: false
+#| message: false
+
+rf_data <- data %>% select(-Target)
+
+set.seed(10)
+rf_errors <- numeric(10)
+
+for(i in 1:10){
+  train_idx <- sample(1:nrow(rf_data), size = 0.8 * nrow(rf_data))
+  train_set <- rf_data[train_idx, ]
+  test_set  <- rf_data[-train_idx, ]
+  
+  # Fit Random Forest
+  rf_model <- randomForest(Status ~ ., data = train_set, importance = TRUE)
+  
+  # Predict on Test Set
+  rf_pred <- predict(rf_model, newdata = test_set)
+  
+  # Calculate Misclassification Error
+  rf_errors[i] <- mean(rf_pred != test_set$Status)
+}
+
+mean_rf_error <- mean(rf_errors)
+print(paste("Mean Test Error Rate:", round(mean_rf_error, 4)))
+```
+
+The Random Forest model achieved a mean test error rate of 22.05% (Accuracy 77.95%). This is a significant improvement over the single Decision Tree model, which had an error rate of 27.1%, confirming that the ensemble approach effectively reduces variance and captures more signal from the data.
+
+## Variable Importance
+
+We examined the variable importance plot to understand which factors drove these predictions.
+
+```{r}
+#| label: rf-importance-plot
+#| echo: false
+
+varImpPlot(rf_model, main = "Random Forest Variable Importance")
+```
+
+The importance plot shows that the variables related to academic performance are the most critical predictors of student success. Curricular units 2nd sem (approved & grade) and Curricular units 1st sem (approved & grade) are the dominant features, suggesting that a student's performance in their very first year is the strongest indicator of whether they will eventually dropout or graduate. Tuition fees up to date is also a highly significant predictor, highlighting the impact of financial stability on student retention. Age at enrollment and admission grades are also shown to contribute moderately but are less significant than the actual university grades.
+
+## Conclusion (Haris Malik)
+
+## Bibliography
+
+Realinho, V., Baptista, L., Machado, J., & Martins, M. V. (2021). *Predict Students' Dropout and Academic Success* \[Dataset\]. UCI Machine Learning Repository. <https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success>
