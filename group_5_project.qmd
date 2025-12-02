@@ -1,5 +1,5 @@
 ---
-title: "Predict Students’ Dropout and Academic Success"
+title: "Predict Students' Dropout and Academic Success"
 subtitle: "Group 5 Project"
 author: "Ida Siewe, Haris Malik, Azamat Tukpatov, Kenth Tecson"
 date: "2025-11-19"
@@ -273,8 +273,20 @@ varImpPlot(rf_model, main = "Random Forest Variable Importance")
 
 The importance plot shows that the variables related to academic performance are the most critical predictors of student success. Curricular units 2nd sem (approved & grade) and Curricular units 1st sem (approved & grade) are the dominant features, suggesting that a student's performance in their very first year is the strongest indicator of whether they will eventually dropout or graduate. Tuition fees up to date is also a highly significant predictor, highlighting the impact of financial stability on student retention. Age at enrollment and admission grades are also shown to contribute moderately but are less significant than the actual university grades.
 
-## Conclusion (Haris Malik)
+# Conclusion
 
-## Bibliography
+Our analysis successfully identified the key factors that influence student dropout and academic success. Both the Decision Tree and Random Forest models pointed to the same conclusion: early academic performance matters most. Students who pass more courses in their first year and maintain higher grades are significantly more likely to graduate, while those struggling early on face much higher dropout risk.
+
+The Random Forest model achieved better accuracy (77.95%) compared to the Decision Tree (72.9%), which makes sense given that ensemble methods reduce overfitting. However, the Decision Tree was easier to interpret and clearly showed that second semester grades and tuition fee status were the main decision points.
+
+Beyond academic performance, financial stability played a major role. The tuition fees up to date variable appeared as an important predictor in both models, suggesting that students facing financial pressure are at higher risk of dropping out. Age at enrollment and admission grades had some effect but were less critical than actual university performance.
+
+These findings have practical value for universities trying to improve retention. If institutions can identify struggling students early in their first semester and provide academic support or financial aid, they could prevent many dropouts before students fall too far behind. The data suggests that waiting until second year to intervene may be too late.
+
+Our models had some limitations worth noting. The class imbalance in the dataset (50% graduates vs. 32% dropouts vs. 18% enrolled) may have affected prediction accuracy for the enrolled group. The dataset also doesn't include factors like work obligations or mental health that could influence dropout decisions. Future work could test other methods like gradient boosting or neural networks to see if accuracy improves further.
+
+Overall, this project demonstrates that universities already have the data needed to predict which students are at risk. The challenge is using these insights to build effective early intervention programs that actually help students succeed.
+
+# Bibliography
 
 Realinho, V., Baptista, L., Machado, J., & Martins, M. V. (2021). *Predict Students' Dropout and Academic Success* \[Dataset\]. UCI Machine Learning Repository. <https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success>
