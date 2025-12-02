@@ -275,7 +275,30 @@ The importance plot shows that the variables related to academic performance are
 
 # Conclusion
 
-Our analysis successfully identified the key factors that influence student dropout and academic success. Both the Decision Tree and Random Forest models pointed to the same conclusion: early academic performance matters most. Students who pass more courses in their first year and maintain higher grades are significantly more likely to graduate, while those struggling early on face much higher dropout risk.
+## Model Comparison
+
+Our analysis successfully identified the key factors that influence student dropout and academic success. To compare the performance of both models, we summarized their key metrics:
+
+```{r}
+#| label: model-comparison
+#| echo: false
+
+library(knitr)
+
+comparison_df <- data.frame(
+  Model = c("Decision Tree (Pruned)", "Random Forest"),
+  Test_Error = c("27.1%", "22.05%"),
+  Test_Accuracy = c("72.9%", "77.95%"),
+  Interpretability = c("High", "Low"),
+  Key_Predictors = c("2nd sem grades, tuition fees, age", "1st & 2nd sem grades, tuition fees")
+)
+
+kable(comparison_df, 
+      col.names = c("Model", "Test Error", "Test Accuracy", "Interpretability", "Key Predictors"),
+      caption = "Comparison of Decision Tree and Random Forest Performance")
+```
+
+Both models pointed to the same conclusion: early academic performance matters most. Students who pass more courses in their first year and maintain higher grades are significantly more likely to graduate, while those struggling early on face much higher dropout risk.
 
 The Random Forest model achieved better accuracy (77.95%) compared to the Decision Tree (72.9%), which makes sense given that ensemble methods reduce overfitting. However, the Decision Tree was easier to interpret and clearly showed that second semester grades and tuition fee status were the main decision points.
 
