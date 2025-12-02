@@ -273,7 +273,7 @@ varImpPlot(rf_model, main = "Random Forest Variable Importance")
 
 The importance plot shows that the variables related to academic performance are the most critical predictors of student success. Curricular units 2nd sem (approved & grade) and Curricular units 1st sem (approved & grade) are the dominant features, suggesting that a student's performance in their very first year is the strongest indicator of whether they will eventually dropout or graduate. Tuition fees up to date is also a highly significant predictor, highlighting the impact of financial stability on student retention. Age at enrollment and admission grades are also shown to contribute moderately but are less significant than the actual university grades.
 
-# Conclusion
+# Conclusion (Haris Malik)
 
 ## Model Comparison
 
